@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Somnus - 時空の睡眠タイマー</title>
+
+    <script type="text/javascript" nonce="72feebcff37a48abb1c1326b296" src="//local.adguard.org?ts=1788727760217&amp;type=content-script&amp;dmn=ide.monaca.education&amp;url=https%3A%2F%2Fide.monaca.education%2Fapi%2Fproject%2F6a30d1ace78885ea4a3342cd%2Ffile%2Fread%2F%2Fwww%2Findex.html%3FrequestContentType%3D%26encoding%3D%26api_token%3Df8dafb09c2eded5ed9639feeb80299628d9145d4&amp;app=com.android.chrome&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=0"></script><link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+</head>
+<body class="theme-night">
+
+    <div class="mist"></div>
+    <div class="stars"></div>
+    <div class="twinkle"></div>
+
+    <div class="container">
+
+        <!-- ホーム画面：月は置かない（黒い映り込み防止） -->
+        <div id="screen-home" class="screen-wrapper">
+            <h1 class="header-large">SOMNUS</h1>
+            <p class="welcome-desc">今夜の月が、眠りの場所を決める</p>
+            <div class="spacer-v80" style="height: 80px;"></div>
+            <div class="controls">
+                <button id="enterBtn" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> 瞑想を始める
+                </button>
+            </div>
+        </div>
+
+        <!-- 広場画面 -->
+        <div id="screen-plaza" class="screen-wrapper hidden">
+            <div class="plaza-status-bar">
+                <div class="currency-display" id="slee-display-plaza">
+                    <i class="fas fa-moon"></i>
+                    <span class="slee-amount">0</span>
+                    <span class="slee-label">スリー</span>
+                </div>
+                <div class="streak-display" id="streak-display-plaza">
+                    <i class="fas fa-fire"></i>
+                    <span class="streak-amount">0</span>
+                    <span class="streak-label">日</span>
+                </div>
+            </div>
+
+            <button class="top-right-home-btn" id="nav-home-plaza" aria-label="ホームへ戻る"><i class="fas fa-home"></i></button>
+
+            <div class="plaza-content">
+                <div class="plaza-field-wrapper" id="plaza-field-wrapper">
+                    <div class="plaza-field" id="plaza-field">
+                        <div class="plaza-cosmic-bg"></div>
+                        <div class="plaza-moon-veil" aria-hidden="true"></div>
+                        <div id="plaza-realm-fx" class="plaza-realm-fx" aria-hidden="true">
+                            <div class="fx-mist-bank fx-mist-1"></div>
+                            <div class="fx-mist-bank fx-mist-2"></div>
+                            <div class="fx-mist-bank fx-mist-3"></div>
+                            <div class="fx-abyss-stars"></div>
+                            <div class="fx-abyss-glow"></div>
+                            <div class="fx-moon-disc"></div>
+                            <div class="fx-moon-haze"></div>
+                            <div class="fx-moon-pillars"></div>
+                            <div class="fx-well-sky"></div>
+                            <div class="fx-well-pool"></div>
+                            <div class="fx-well-ripple fx-well-ripple-a"></div>
+                            <div class="fx-well-ripple fx-well-ripple-b"></div>
+                            <div class="fx-well-crescent"></div>
+                            <div class="fx-echo-dust"></div>
+                        </div>
+                        <div class="plaza-tree"></div>
+                        <div class="field-glow"></div>
+
+                        <button class="cosmic-clock-orb" id="plaza-clock-trigger">
+                            <div class="orb-glow-layer"></div>
+                            <i class="fas fa-bed clock-icon"></i>
+                            <span class="clock-tap-guide">TAP TO SLEEP</span>
+                        </button>
+
+                        <div id="character-area" class="character-area"></div>
+                    </div>
+                </div>
+
+                <div id="plaza-realm-badge" class="plaza-realm-badge">境界の霧</div>
+                <button type="button" id="plaza-tide-badge" class="plaza-tide-badge" aria-label="今夜の加護の詳細">月の加護</button>
+                <button type="button" id="plaza-shop-btn" class="plaza-shop-btn">交換所</button>
+                <p id="plaza-status-text" class="cosmic-text">静寂な星空の広場（誰もいないようだ…）</p>
+                <div id="plaza-ticket-chip" class="plaza-ticket-chip hidden"></div>
+            </div>
+
+            <div class="bottom-tab-bar">
+                <button class="tab-btn active" data-tab-target="screen-plaza">🔮 広場</button>
+                <button class="tab-btn" data-tab-target="screen-history">📜 履歴</button>
+                <button class="tab-btn" data-tab-target="screen-moon">🌙 月</button>
+            </div>
+        </div>
+
+        <!-- メイン計測画面 -->
+        <div id="screen-main" class="screen-wrapper hidden">
+            <button class="top-right-home-btn" id="nav-home-main" aria-label="ホームへ戻る"><i class="fas fa-home"></i></button>
+            <button class="top-right-back-btn" id="nav-back-to-plaza"><i class="fas fa-chevron-left"></i> 広場へ</button>
+
+            <div class="glass-card">
+
+                <div id="view-sleep" class="app-view">
+                    <div class="timer-container">
+                        <div class="glow-ring">
+                            <div class="time-box">
+                                <div id="display">00:00:00</div>
+                                <div class="line"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="live-sensor-status">
+                        <span id="sensor-active-dot">●</span> センサー稼働中（省電力モード）
+                    </div>
+                    <div class="controls main-controls">
+                        <button id="startBtn" class="btn-primary"><i class="fas fa-moon"></i> 睡眠</button>
+                        <button id="stopBtn" class="btn-primary hidden"><i class="fas fa-sun"></i> 起床</button>
+                    </div>
+                </div>
+
+                <div id="view-result" class="app-view hidden scrollable-view">
+
+                    <div class="wake-hero">
+                        <div id="wake-moon-line" class="wake-moon-line">月</div>
+                        <div id="result-realm-name" class="wake-realm-name">境界の霧</div>
+                        <div id="wake-rest-line" class="wake-rest-line">夜の名残</div>
+                    </div>
+
+                    <div id="result-realm-box" class="realm-result-box">
+                        <div id="result-realm-reason" class="realm-result-reason">今夜の月と眠りから決まります</div>
+                        <div id="result-tide-chip" class="tide-chip hidden"></div>
+                    </div>
+
+                    <div id="reward-slee-box" class="reward-slee-box hidden">
+                        <i class="fas fa-moon"></i>
+                        <span id="reward-slee-text">+0 スリー 獲得！</span>
+                    </div>
+
+                    <div id="result-rank-text" class="hidden">-</div>
+                    <div id="result-time" class="hidden">00:00:00</div>
+
+                    <p class="result-message" id="result-comment">星々があなたの目覚めを祝っています</p>
+
+                    <button type="button" id="result-details-toggle" class="result-details-toggle">記録を見る</button>
+                    <div id="result-details" class="result-details hidden">
+                    <div class="report-box">
+                        <div class="report-item">
+                            <span class="report-label">時間</span>
+                            <span class="report-value" id="result-time-detail">00:00:00</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">総検知振動（寝返り）</span>
+                            <span class="report-value" id="result-vibration-count" style="color: #ffe57f; font-weight: 600;">0 回</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">睡眠解析ステータス</span>
+                            <span class="report-value" id="result-status-text" style="font-size: 0.85rem; opacity: 0.9;">--</span>
+                        </div>
+                    </div>
+
+                    <div class="graph-section-title sleep-flow-title">今夜の流れ</div>
+                    <div class="sleep-flow-card">
+                        <div id="sleep-flow-track" class="sleep-flow-track"></div>
+                        <div class="sleep-flow-axis"><span>はじめ</span><span>おわり</span></div>
+                        <div class="sleep-flow-legend">
+                            <span class="flow-lg deep">深い</span>
+                            <span class="flow-lg light">うとうと</span>
+                            <span class="flow-lg wake">起きがち</span>
+                        </div>
+                        <div id="sleep-flow-summary" class="sleep-flow-summary"></div>
+                    </div>
+                    <div id="graphWrapper" class="hidden">
+                        <canvas id="sleepChart"></canvas>
+                    </div>
+
+                    </div>
+
+                    <div class="controls" style="margin-top: 25px; margin-bottom: 10px;">
+                        <button id="backToHomeBtn" class="btn-primary">
+                            <i class="fas fa-arrow-left"></i> 広場へ戻る
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 履歴画面 -->
+        <div id="screen-history" class="screen-wrapper hidden">
+            <div class="plaza-cosmic-bg"></div>
+
+            <div class="plaza-content" style="padding-top: 60px;">
+                <h2 class="header-large" style="font-size: 24px; letter-spacing: 12px; text-indent: 12px; margin-bottom: 10px;">HISTORY</h2>
+                <p class="welcome-desc" style="margin-bottom: 16px;">過去の眠りの記憶</p>
+
+                <div id="weekly-summary" class="weekly-summary">
+                    <div class="weekly-title">この7日</div>
+                    <div class="weekly-grid weekly-grid-2">
+                        <div><span>平均時間</span><strong id="week-avg">—</strong></div>
+                        <div><span>多い次元</span><strong id="week-realm">—</strong></div>
+                    </div>
+                </div>
+
+                <div id="history-list-container" class="scrollable-view" style="width: 100%; max-width: 340px; height: calc(100dvh - 260px); box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div class="bottom-tab-bar">
+                <button class="tab-btn" data-tab-target="screen-plaza">🔮 広場</button>
+                <button class="tab-btn active" data-tab-target="screen-history">📜 履歴</button>
+                <button class="tab-btn" data-tab-target="screen-moon">🌙 月</button>
+            </div>
+        </div>
+
+        <!-- 月タブ（形と詳細はここで見る） -->
+        <div id="screen-moon" class="screen-wrapper hidden">
+            <div class="plaza-cosmic-bg"></div>
+            <button class="top-right-home-btn" id="nav-home-moon" aria-label="ホームへ戻る"><i class="fas fa-home"></i></button>
+
+            <div class="moon-screen-content scrollable-view">
+                <h2 class="header-large moon-screen-title">MOON</h2>
+                <p class="welcome-desc">今夜の天体</p>
+
+                <div class="moon-hero">
+                    <div class="moon-stage">
+                        <div id="moon-hero-disc" class="moon-disc moon-disc-lg" aria-hidden="true">
+                            <div class="moon-lit"></div>
+                            <div class="moon-shade"></div>
+                        </div>
+                    </div>
+                    <div id="moon-hero-name" class="moon-hero-name">—</div>
+                    <div id="moon-hero-sub" class="moon-hero-sub">月齢 —</div>
+                </div>
+
+                <div class="moon-stat-grid">
+                    <div class="moon-stat">
+                        <span>月齢</span>
+                        <strong id="moon-stat-age">—</strong>
+                    </div>
+                    <div class="moon-stat">
+                        <span>輝面</span>
+                        <strong id="moon-stat-illum">—</strong>
+                    </div>
+                    <div class="moon-stat">
+                        <span>周期</span>
+                        <strong id="moon-stat-cycle">29.5日</strong>
+                    </div>
+                </div>
+
+                <p id="moon-flavor" class="moon-flavor">今夜の月が、眠りの次元を静かに染めます。</p>
+
+                <div class="moon-section-label">いま開いている次元</div>
+                <div id="moon-realm-card" class="moon-realm-card">
+                    <div id="moon-realm-name" class="moon-realm-name">境界の霧</div>
+                    <div id="moon-realm-desc" class="moon-realm-desc">まだ今夜の眠りは記録されていません。</div>
+                </div>
+
+                <div class="moon-section-label">今夜の加護</div>
+                <div id="moon-tide-card" class="moon-tide-card">
+                    <div id="moon-tide-name" class="moon-tide-name">静かな夜</div>
+                    <div id="moon-tide-desc" class="moon-tide-desc">特別な加護はありません。</div>
+                </div>
+
+                <div class="moon-section-label">これから訪れる月</div>
+                <div id="moon-upcoming" class="moon-upcoming"></div>
+            </div>
+
+            <div class="bottom-tab-bar">
+                <button class="tab-btn" data-tab-target="screen-plaza">🔮 広場</button>
+                <button class="tab-btn" data-tab-target="screen-history">📜 履歴</button>
+                <button class="tab-btn active" data-tab-target="screen-moon">🌙 月</button>
+            </div>
+        </div>
+
+        <div id="screen-shop" class="screen-wrapper hidden">
+            <div class="plaza-cosmic-bg"></div>
+            <button class="top-right-home-btn" id="nav-home-shop" aria-label="ホームへ戻る"><i class="fas fa-home"></i></button>
+
+            <div class="shop-screen-content scrollable-view">
+                <h2 class="header-large moon-screen-title">SHOP</h2>
+                <p class="welcome-desc">眠りのしずくを、夜の道具へ</p>
+                <div class="shop-slee-line">所持 <span class="slee-amount">0</span> スリー</div>
+
+                <div class="shop-section-label">使うと減るもの</div>
+                <div id="shop-items" class="shop-list">
+                    <div class="shop-card"><div class="shop-name">霧の灯</div><div class="shop-desc">読み込み中…</div></div>
+                </div>
+
+                <div class="shop-section-label">時計のきせかえ</div>
+                <div id="shop-orbs" class="shop-list">
+                    <div class="shop-card"><div class="shop-name">霧ガラス</div><div class="shop-desc">読み込み中…</div></div>
+                </div>
+            </div>
+
+            <div class="bottom-tab-bar">
+                <button class="tab-btn" data-tab-target="screen-plaza">🔮 広場</button>
+                <button class="tab-btn" data-tab-target="screen-history">📜 履歴</button>
+                <button class="tab-btn" data-tab-target="screen-moon">🌙 月</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 中断確認モーダル -->
+    <div id="abort-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="modal-title">ABORT MEASUREMENT</h3>
+            <p class="modal-desc">計測を中断しますか？<br>ここまでの睡眠データは破棄されます。</p>
+            <div class="modal-buttons">
+                <button id="modal-cancel-btn" class="btn-modal btn-modal-cancel">続ける</button>
+                <button id="modal-confirm-btn" class="btn-modal btn-modal-confirm">中断する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEBUG PANEL -->
+    <button id="debug-toggle-btn" class="debug-toggle-btn">DEBUG</button>
+
+    <div id="debug-panel" class="debug-panel hidden">
+        <div class="debug-header">
+            <span>🛠️ DEBUG MODE</span>
+            <button id="debug-close-btn" class="debug-close-btn">×</button>
+        </div>
+        <div class="debug-body">
+            <label>睡眠時間（分）</label>
+            <input type="number" id="debug-minutes" value="480" min="1" max="1440">
+
+            <label>寝返り回数</label>
+            <input type="number" id="debug-vibrations" value="25" min="0" max="200">
+
+            <label>強制ランク</label>
+            <select id="debug-rank">
+                <option value="auto">自動計算</option>
+                <option value="S">S</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+            </select>
+
+            <label>強制次元</label>
+            <select id="debug-realm">
+                <option value="auto">自動計算</option>
+                <option value="mist">境界の霧</option>
+                <option value="abyss">星海の深淵</option>
+                <option value="corridor">月影の回廊</option>
+                <option value="well">常夜の井戸</option>
+                <option value="echo">残響の庭</option>
+            </select>
+
+            <label>強制月勢</label>
+            <select id="debug-tide">
+                <option value="auto">自動（実月齢）</option>
+                <option value="full">満月の加護</option>
+                <option value="near">満月寄り</option>
+                <option value="new">新月の影</option>
+                <option value="none">加護なし</option>
+            </select>
+
+            <button id="debug-apply-btn" class="debug-apply-btn">この値で結果を生成</button>
+            <p class="debug-note">※計測中でも強制で結果画面に飛びます</p>
+        </div>
+    </div>
+
+    <script src="cordova.js"></script>
+    <script src="components/loader.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
